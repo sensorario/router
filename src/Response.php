@@ -6,6 +6,11 @@ class Response
 {
     public function __construct(private array $json = []) { }
 
+    public function getArrayContent(): array
+    {
+        return $this->json;
+    }
+
     public function getContent()
     {
         $port = 9999;
