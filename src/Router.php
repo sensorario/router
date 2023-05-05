@@ -7,7 +7,10 @@ use Sensorario\YoutubeAttributes\Handler;
 
 class Router
 {
-    public function __construct(private array $config) { }
+    public function __construct(
+        private array $config,
+        private RouteFactory $factory = new RouteFactory,
+    ) { }
 
     public function match(): Response
     {
@@ -20,6 +23,12 @@ class Router
                 throw new \RuntimeException('Oops! Missing handler class in controller configuration');
             }
 
+            if (!method_exists($handler, 'handle')) {
+                throw new \RuntimeException(
+                    sprintf('Oops! Controller should be an instance of '. Handler::class .' class.')
+                );
+            }
+
             $reflection = new ReflectionClass($handler);
             $attributes = $reflection->getAttributes(Route::class);
 
@@ -28,16 +37,10 @@ class Router
             }
 
             foreach($attributes as $attribute) {
-                if ($attribute->getArguments()[0] === $_SERVER['REQUEST_METHOD']) {
-                    if ($attribute->getArguments()[1] === $_SERVER['REQUEST_URI']) {
-                        if (!method_exists($handler, 'handle')) {
-                            throw new \RuntimeException(
-                                sprintf('Oops! Controller should be an instance of '. Handler::class .' class.')
-                            );
-                        }
-
-                        return (new $handler)->handle();
-                    }
+                $requestRoute = $this->factory->buildFromHttpRequest();
+                $controllerRoute = $this->factory->buildFromRflectionAttribute($attribute);
+                if ($requestRoute == $controllerRoute) {
+                    return (new $handler)->handle();
                 }
             }
         }

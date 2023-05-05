@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Sensorario\YoutubeAttributes\Handler;
 use Sensorario\YoutubeAttributes\Response;
 use Sensorario\YoutubeAttributes\Route;
+use Sensorario\YoutubeAttributes\RouteFactory;
 use Sensorario\YoutubeAttributes\Router;
 
 class RouterTest extends TestCase
@@ -69,11 +70,15 @@ class RouterTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Oops! Controller should be an instance of Sensorario\YoutubeAttributes\Handler class.');
 
+        /** @var RouteFactory */
+        $factory = $this->getMockBuilder(RouteFactory::class)
+            ->getMock();
+
         $router = new Router([
             'controllers' => [
                 ControllerWithAttributes::class,
             ],
-        ]);
+        ], $factory);
 
         $router->match();
     }
@@ -81,20 +86,35 @@ class RouterTest extends TestCase
     /** @test */
     public function shouldReturnValidResponse()
     {
+        /** @var RouteFactory */
+        $factory = $this->getMockBuilder(RouteFactory::class)
+            ->getMock();
+        $factory->expects($this->once())
+            ->method('buildFromHttpRequest')
+            ->willReturn(new Route);
+        $factory->expects($this->once())
+            ->method('buildFromRflectionAttribute')
+            ->willReturn(new Route);
+
         $router = new Router([
             'controllers' => [
                 ValidControllerClass::class,
             ],
-        ]);
+        ], $factory);
 
         $response = $router->match();
         $this->assertArrayHasKey('success', $response->getArrayContent());
     }
 }
 
-class ControllerWithoutAttributes
+class ControllerWithoutAttributes implements Handler
 {
-
+    public function handle(): Response
+    {
+        return new Response([
+            'success' => 'true',
+        ]);
+    }
 }
 
 #[Route]
