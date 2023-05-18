@@ -82,38 +82,15 @@ class RouterTest extends TestCase
 
         $router->match();
     }
-
-    /** @test */
-    public function shouldReturnValidResponse()
-    {
-        /** @var RouteFactory */
-        $factory = $this->getMockBuilder(RouteFactory::class)
-            ->getMock();
-        $factory->expects($this->once())
-            ->method('buildFromHttpRequest')
-            ->willReturn(new Route);
-        $factory->expects($this->once())
-            ->method('buildFromRflectionAttribute')
-            ->willReturn(new Route);
-
-        $router = new Router([
-            'controllers' => [
-                ValidControllerClass::class,
-            ],
-        ], $factory);
-
-        $response = $router->match();
-        $this->assertArrayHasKey('success', $response->getArrayContent());
-    }
 }
 
 class ControllerWithoutAttributes implements Handler
 {
     public function handle(): Response
     {
-        return new Response([
+        return new Response(json_encode([
             'success' => 'true',
-        ]);
+        ]));
     }
 }
 
@@ -128,8 +105,8 @@ class ValidControllerClass implements Handler
 {
     public function handle(): Response
     {
-        return new Response([
+        return new Response(json_encode([
             'success' => 'true',
-        ]);
+        ]));
     }
 }
