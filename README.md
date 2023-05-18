@@ -1,9 +1,7 @@
-# youtube.attributes
+# Router
 
-## Run built-in server
+## Install
 
 ```bash
-php -S localhost:8888 -t public
+composer create-project sensorario/router
 ```
-
-[show me the code](/public)
